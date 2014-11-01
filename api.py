@@ -1,8 +1,6 @@
 from os.path import expanduser
 import json
-import urllib
 import urllib2
-from sslv3 import HTTPSHandlerV3
 
 API = {
     'PROTO': "https",
@@ -47,9 +45,14 @@ def gen_api_call(func_name):
 
 
 def _call_api(url, data):
-    params = urllib.urlencode(data)
-    urllib2.install_opener(urllib2.build_opener(HTTPSHandlerV3()))
-    jsondata = urllib2.urlopen(url, params).read()
+    params = json.dumps(data)
+    print "calling with %s" % params
+    req = urllib2.Request(
+        url,
+        data=params,
+        headers={'Content-type': 'application/json'}
+    )
+    jsondata = urllib2.urlopen(req).read()
     return json.loads(jsondata)
 
 
