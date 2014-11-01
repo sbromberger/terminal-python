@@ -46,6 +46,13 @@ def gen_api_call(func_name):
         func_name)
 
 
+def _call_api(url, data):
+    params = urllib.urlencode(data)
+    urllib2.install_opener(urllib2.build_opener(HTTPSHandlerV3()))
+    jsondata = urllib2.urlopen(url, params).read()
+    return json.loads(jsondata)
+
+
 class Session(object):
     def __init__(
         self,
@@ -67,12 +74,6 @@ class Session(object):
 
     def generic_api(func_name, api_args=[], *args, **kwargs):
         def inner_api(self, *args, **kwargs):
-            def _call_api(url, data):
-                params = urllib.urlencode(data)
-                urllib2.install_opener(urllib2.build_opener(HTTPSHandlerV3()))
-                jsondata = urllib2.urlopen(url, params).read()
-                return json.loads(jsondata)
-
             url = gen_api_call(func_name)
             data = self.tokens
             zip_args = zip(api_args, args)
@@ -236,3 +237,4 @@ class Session(object):
         'get_authorized_keys_from_ssh_proxy'
     )
     request_progress = generic_api('request_progress', ['request_id', ])
+
