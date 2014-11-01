@@ -27,16 +27,14 @@ def get_api_key(fn=API_FILENAME):
     }
     try:
         apifile = "%s/%s" % (expanduser("~"), fn)
-        print "apifile = %s" % apifile
         f = open(apifile, "r")
 
         for line in f.readlines():
-            print "read %s" % line
             (k, v) = line.split('=')
             if k in api_tokens:
                 api_tokens[k] = v.strip()
     except:
-        print "error"
+        pass
     return api_tokens
 
 
