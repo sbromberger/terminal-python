@@ -78,7 +78,6 @@ class Session(object):
             zip_args = zip(api_args, args)
             data.update(zip_args)
             data.update(kwargs)
-            print "calling %s with %s" % (url, data)
             return _call_api(url, data)
         return inner_api
 
