@@ -37,6 +37,9 @@ def get_api_key(fn=API_FILENAME):
 
 
 def gen_api_call(func_name):
+    """
+    Will generate the API URI required for a given function call.
+    """
     return "{}://{}/{}/{}".format(
         API['PROTO'],
         API['BASE_URL'],
@@ -45,8 +48,10 @@ def gen_api_call(func_name):
 
 
 def _call_api(url, data):
+    """
+    Calls the API using the given URL and data
+    """
     params = json.dumps(data)
-    print "calling with %s" % params
     req = urllib2.Request(
         url,
         data=params,
@@ -56,7 +61,23 @@ def _call_api(url, data):
     return json.loads(jsondata)
 
 
+def generic_api(func_name, api_args=[], *args, **kwargs):
+    def inner_api(self, *args, **kwargs):
+        url = gen_api_call(func_name)
+        data = self.tokens
+        zip_args = zip(api_args, args)
+        data.update(zip_args)
+        data.update(kwargs)
+        return _call_api(url, data)
+    return inner_api
+
+
 class Session(object):
+    """
+    The main class for an API session. Initialized
+    with (optional) user_token and access_token.
+    Exposes all API methods as instance methods.
+    """
     def __init__(
         self,
         user_token=None,
@@ -64,30 +85,39 @@ class Session(object):
         *args,
         **kwargs
     ):
+        """
+        Session constructor. Will try to read tokens from file.
+        Can override tokens. If no tokens available, will default
+        to empty strings.
+        """
         api_tokens = get_api_key()
         self.user_token = user_token or api_tokens['user_token']
         self.access_token = access_token or api_tokens['access_token']
 
     @property
     def tokens(self):
+        """
+        A convenience method/property that returns
+        a dict of the user and access tokens.
+        """
         return {
             'user_token': self.user_token,
             'access_token': self.access_token
         }
 
-    def generic_api(func_name, api_args=[], *args, **kwargs):
-        def inner_api(self, *args, **kwargs):
-            url = gen_api_call(func_name)
-            data = self.tokens
-            zip_args = zip(api_args, args)
-            data.update(zip_args)
-            data.update(kwargs)
-            return _call_api(url, data)
-        return inner_api
-
+    ##############################################
+    # The attributes below are actually methods
+    # returned by generic_api. The list (api_args)
+    # is used to tell generic_api what parameters
+    # are valid for args for the given API call,
+    # and in which order they should be passed.
+    # Any other kwargs that are passed are
+    # included; any add'l args that are included
+    # are ignored.
+    ##############################################
     who_am_i = generic_api('who_am_i')
-    get_snapshot = generic_api('get_snapshot', ['snapshot_id'])
-    get_profile = generic_api('get_profile', ['username'])
+    get_snapshot = generic_api('get_snapshot', ['snapshot_id', ])
+    get_profile = generic_api('get_profile', ['username', ])
     list_public_snapshots = generic_api('list_public_snapshots', [
         'username',
         'tag',
